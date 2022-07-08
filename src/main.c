@@ -1,15 +1,18 @@
 #include "raylib.h"
 
-#define WINDOW_WIDTH 800
+#include <stdio.h>
+
+#define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 600
 
-#define BOARD_WIDTH 80
+#define BOARD_WIDTH  80
 #define BOARD_HEIGHT 60
 
 int play = 0;
 
 typedef unsigned char Board[BOARD_HEIGHT][BOARD_WIDTH];
 
+// clang-format off
 Board board1 = {
   {0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -134,91 +137,101 @@ Board board2 = {
   {0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
+// clang-format on
+
+Board *currentBoard = &board1;
+Board *otherBoard = &board2;
+
+void updateBoards() {
+  for (int i = 0; i < BOARD_HEIGHT; i++) {
+    for (int j = 0; j < BOARD_WIDTH; j++) {
+      int neighbours = 0;
+      // up
+      if (i > 0 && (*currentBoard)[i - 1][j]) {
+        neighbours++;
+      }
+      // up and right
+      if (i > 0 && j < BOARD_WIDTH - 1 && (*currentBoard)[i - 1][j + 1]) {
+        neighbours++;
+      }
+      // right
+      if (j < BOARD_WIDTH - 1 && (*currentBoard)[i][j + 1]) {
+        neighbours++;
+      }
+      // down and right
+      if (i < BOARD_HEIGHT - 1 && j < BOARD_WIDTH - 1 && (*currentBoard)[i + 1][j + 1]) {
+        neighbours++;
+      }
+      // down
+      if (i < BOARD_HEIGHT - 1 && (*currentBoard)[i + 1][j]) {
+        neighbours++;
+      }
+      // down and left
+      if (i < BOARD_HEIGHT - 1 && j > 0 && (*currentBoard)[i + 1][j - 1]) {
+        neighbours++;
+      }
+      // left
+      if (j > 0 && (*currentBoard)[i][j - 1]) {
+        neighbours++;
+      }
+      // up and left
+      if (i > 0 && j > 0 && (*currentBoard)[i - 1][j - 1]) {
+        neighbours++;
+      }
+
+      if ((*currentBoard)[i][j]) {
+        if (neighbours < 2 || neighbours > 3) {
+          (*otherBoard)[i][j] = 0;
+        } else {
+          (*otherBoard)[i][j] = 1;
+        }
+      } else {
+        if (neighbours == 3) {
+          (*otherBoard)[i][j] = 1;
+        } else {
+          (*otherBoard)[i][j] = 0;
+        }
+      }
+    }
+  }
+
+  // swap boards
+  Board *temp = currentBoard;
+  currentBoard = otherBoard;
+  otherBoard = temp;
+}
 
 int main() {
+  // window
+  SetConfigFlags(FLAG_VSYNC_HINT);
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Game Of Life");
 
-  SetTargetFPS(10);
-  Board *currentBoard = &board1;
-  Board *otherBoard = &board2;
+  // tick speed stuff
+  double tickRate = 5.0;
+  const double tickTime = 1.0 / tickRate;
+  double tickTimer = 0.0;
 
   while (!WindowShouldClose()) {
     if (IsKeyPressed(KEY_SPACE)) {
       play = !play;
     }
 
-    if (play) {
-      for (int i = 0; i < BOARD_HEIGHT; i++) {
-        for (int j = 0; j < BOARD_WIDTH; j++) {
-          int neighbours = 0;
-          // up
-          if (i > 0 && (*currentBoard)[i-1][j]) {
-            neighbours++;
-          }
-          // up and right
-          if (i > 0 && j < BOARD_WIDTH - 1 && (*currentBoard)[i-1][j+1]) {
-            neighbours++;
-          }
-          // right
-          if (j < BOARD_WIDTH - 1 && (*currentBoard)[i][j+1]) {
-            neighbours++;
-          }
-          // down and right
-          if (i < BOARD_HEIGHT - 1 && j < BOARD_WIDTH - 1 && (*currentBoard)[i+1][j+1]) {
-            neighbours++;
-          }
-          // down
-          if (i < BOARD_HEIGHT - 1 && (*currentBoard)[i+1][j]) {
-            neighbours++;
-          }
-          // down and left
-          if (i < BOARD_HEIGHT - 1 && j > 0 && (*currentBoard)[i+1][j-1]) {
-            neighbours++;
-          }
-          // left
-          if (j > 0 && (*currentBoard)[i][j-1]) {
-            neighbours++;
-          }
-          // up and left
-          if (i > 0 && j > 0 && (*currentBoard)[i-1][j-1]) {
-            neighbours++;
-          }
-
-          if ((*currentBoard)[i][j]) {
-            if (neighbours < 2 || neighbours > 3) {
-              (*otherBoard)[i][j] = 0;
-            }
-            else {
-              (*otherBoard)[i][j] = 1;
-            }
-          }
-          else {
-            if (neighbours == 3) {
-              (*otherBoard)[i][j] = 1;
-            }
-            else {
-              (*otherBoard)[i][j] = 0;
-            }
-          }
-        }
+    tickTimer += GetFrameTime();
+    while (tickTimer >= tickTime) {
+      if (play) {
+        updateBoards();
       }
-
-      // swap boards
-      Board *temp = currentBoard;
-      currentBoard = otherBoard;
-      otherBoard = temp;
+      tickTimer -= tickTime;
     }
 
     BeginDrawing();
 
     ClearBackground(RAYWHITE);
-    // DrawText("HELLO", 190, 200, 20, LIGHTGRAY);
-    // DrawRectangle(0, 0, 10, 10, BLACK);
     for (int i = 0; i < BOARD_HEIGHT; i++) {
       for (int j = 0; j < BOARD_WIDTH; j++) {
         if ((*currentBoard)[i][j]) {
-          // printf("hi\n");
-          DrawRectangle(j * WINDOW_WIDTH / BOARD_WIDTH, i * WINDOW_HEIGHT / BOARD_HEIGHT, WINDOW_WIDTH / BOARD_WIDTH, WINDOW_HEIGHT / BOARD_HEIGHT, BLACK);
+          DrawRectangle(j * WINDOW_WIDTH / BOARD_WIDTH, i * WINDOW_HEIGHT / BOARD_HEIGHT,
+              WINDOW_WIDTH / BOARD_WIDTH, WINDOW_HEIGHT / BOARD_HEIGHT, BLACK);
         }
       }
     }
