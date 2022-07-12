@@ -1,5 +1,6 @@
 #include "raylib.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,6 +19,43 @@ Board board2;
 
 Board *currentBoard = &board1;
 Board *otherBoard = &board2;
+
+// log function for raylib to use
+void logRaylib(int msgType, const char *text, va_list args) {
+  switch (msgType) {
+  case LOG_TRACE:
+    printf("[TRACE]: ");
+    break;
+  case LOG_DEBUG:
+    printf("[DEBUG]: ");
+    break;
+  case LOG_INFO:
+    printf("[INFO]: ");
+    break;
+  case LOG_WARNING:
+    printf("[WARN]: ");
+    break;
+  case LOG_ERROR:
+    printf("[ERROR]: ");
+    break;
+  case LOG_FATAL:
+    printf("[LOG]: ");
+    break;
+  default:
+    break;
+  }
+
+  vprintf(text, args);
+  printf("\n");
+}
+
+// wrapper around raylib log function for easier use
+void logMsg(TraceLogLevel msgType, const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  logRaylib(msgType, fmt, args);
+  va_end(args);
+}
 
 void updateBoards() {
   for (int i = 0; i < BOARD_HEIGHT; i++) {
@@ -79,6 +117,9 @@ void updateBoards() {
 }
 
 int main() {
+  // raylib setup
+  SetTraceLogCallback(logRaylib);
+
   // window
   SetConfigFlags(FLAG_VSYNC_HINT);
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Game of Life");
@@ -86,7 +127,7 @@ int main() {
   // load board
   FILE *boardFile = fopen("board.txt", "r");
   if (boardFile == NULL) {
-    fprintf(stderr, "error: Opening board failed\n");
+    logMsg(LOG_ERROR, "Opening board failed");
     CloseWindow();
     return EXIT_FAILURE;
   }
