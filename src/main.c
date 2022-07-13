@@ -1,3 +1,5 @@
+#include "colors.h"
+
 #include "raylib.h"
 
 #include <stdarg.h>
@@ -9,6 +11,9 @@
 
 #define BOARD_WIDTH  80
 #define BOARD_HEIGHT 60
+
+int loglevel = 2;
+int color = 1;
 
 int play = 0;
 
@@ -22,24 +27,45 @@ Board *otherBoard = &board2;
 
 // log function for raylib to use
 void logRaylib(int msgType, const char *text, va_list args) {
+  if (msgType <= loglevel)
+    return;
+
   switch (msgType) {
   case LOG_TRACE:
-    printf("[TRACE]: ");
+    if (color)
+      printf(ANSI_COLOR_MAGENTA "[TRACE]" ANSI_COLOR_RESET ": ");
+    else
+      printf("[TRACE]: ");
     break;
   case LOG_DEBUG:
-    printf("[DEBUG]: ");
+    if (color)
+      printf(ANSI_COLOR_MAGENTA "[DEBUG]" ANSI_COLOR_RESET ": ");
+    else
+      printf("[DEBUG]: ");
     break;
   case LOG_INFO:
-    printf("[INFO]: ");
+    if (color)
+      printf(ANSI_COLOR_BLUE "[INFO]" ANSI_COLOR_RESET ": ");
+    else
+      printf("[INFO]: ");
     break;
   case LOG_WARNING:
-    printf("[WARN]: ");
+    if (color)
+      printf(ANSI_COLOR_YELLOW "[WARN]" ANSI_COLOR_RESET ": ");
+    else
+      printf("[WARN]: ");
     break;
   case LOG_ERROR:
-    printf("[ERROR]: ");
+    if (color)
+      printf(ANSI_COLOR_RED "[ERROR]" ANSI_COLOR_RESET ": ");
+    else
+      printf("[ERROR]: ");
     break;
   case LOG_FATAL:
-    printf("[LOG]: ");
+    if (color)
+      printf(ANSI_COLOR_RED "[LOG]" ANSI_COLOR_RESET ": ");
+    else
+      printf("[LOG]: ");
     break;
   default:
     break;
@@ -117,8 +143,11 @@ void updateBoards() {
 }
 
 int main() {
+  // TODO: set loglevel and color based on command line args
+  
   // raylib setup
   SetTraceLogCallback(logRaylib);
+  // SetTraceLogLevel(2);
 
   // window
   SetConfigFlags(FLAG_VSYNC_HINT);
