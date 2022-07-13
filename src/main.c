@@ -12,7 +12,7 @@
 #define BOARD_WIDTH  80
 #define BOARD_HEIGHT 60
 
-int loglevel = 2;
+int loglevel = LOG_INFO;
 int color = 1;
 
 int play = 0;
@@ -27,7 +27,7 @@ Board *otherBoard = &board2;
 
 // log function for raylib to use
 void logRaylib(int msgType, const char *text, va_list args) {
-  if (msgType <= loglevel)
+  if (msgType < loglevel)
     return;
 
   switch (msgType) {
