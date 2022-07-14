@@ -6,13 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define WINDOW_WIDTH  800
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH  1000
+#define WINDOW_HEIGHT 1000
 
-#define BOARD_WIDTH  80
-#define BOARD_HEIGHT 60
+#define BOARD_WIDTH  1000
+#define BOARD_HEIGHT 1000
 
-int loglevel = LOG_INFO;
+int logLevel = LOG_INFO;
 int color = 1;
 
 int play = 0;
@@ -27,7 +27,7 @@ Board *otherBoard = &board2;
 
 // log function for raylib to use
 void logRaylib(int msgType, const char *text, va_list args) {
-  if (msgType < loglevel)
+  if (msgType < logLevel)
     return;
 
   switch (msgType) {
@@ -143,11 +143,10 @@ void updateBoards() {
 }
 
 int main() {
-  // TODO: set loglevel and color based on command line args
+  // TODO: set logLevel and color based on command line args
   
   // raylib setup
   SetTraceLogCallback(logRaylib);
-  // SetTraceLogLevel(2);
 
   // window
   SetConfigFlags(FLAG_VSYNC_HINT);
@@ -167,16 +166,18 @@ int main() {
   }
   fclose(boardFile);
 
-  // tick speed stuff
+  // tick stuff
   double tickRate = 5.0;
   const double tickTime = 1.0 / tickRate;
   double tickTimer = 0.0;
 
+  // game loop
   while (!WindowShouldClose()) {
     if (IsKeyPressed(KEY_SPACE)) {
       play = !play;
     }
 
+    // tick
     tickTimer += GetFrameTime();
     while (tickTimer >= tickTime) {
       if (play) {
@@ -188,6 +189,8 @@ int main() {
     BeginDrawing();
 
     ClearBackground(RAYWHITE);
+
+    // draw board
     for (int i = 0; i < BOARD_HEIGHT; i++) {
       for (int j = 0; j < BOARD_WIDTH; j++) {
         if ((*currentBoard)[i][j]) {
