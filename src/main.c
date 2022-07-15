@@ -17,6 +17,7 @@ int logLevel = LOG_INFO;
 int color = 1;
 
 int play = 0;
+int tileSize = 1;
 
 typedef unsigned char Board[BOARD_HEIGHT][BOARD_WIDTH];
 
@@ -144,6 +145,7 @@ void updateBoards() {
 }
 
 int main(int argc, char **argv) {
+  // command line arguments
   for (int i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "--logLevel")) {
       if (i < argc - 1) {
@@ -211,8 +213,8 @@ int main(int argc, char **argv) {
     for (int i = 0; i < BOARD_HEIGHT; i++) {
       for (int j = 0; j < BOARD_WIDTH; j++) {
         if ((*currentBoard)[i][j]) {
-          DrawRectangle(j * WINDOW_WIDTH / BOARD_WIDTH, i * WINDOW_HEIGHT / BOARD_HEIGHT,
-              WINDOW_WIDTH / BOARD_WIDTH, WINDOW_HEIGHT / BOARD_HEIGHT, BLACK);
+          DrawRectangle(j * tileSize, i * tileSize,
+              tileSize, tileSize, BLACK);
         }
       }
     }
