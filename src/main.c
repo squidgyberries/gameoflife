@@ -85,6 +85,25 @@ void logMsg(TraceLogLevel msgType, const char *fmt, ...) {
   va_end(args);
 }
 
+// write board to file
+void writeBoard(FILE *file, Board *board) {
+  for (int i = 0; i < BOARD_HEIGHT; i++) {
+    for (int j = 0; j < BOARD_WIDTH - 1; j++) {
+      fprintf(file, "%hhu ", (*board)[i][j]);
+    }
+    fprintf(file, "%hhu\n", (*board)[i][BOARD_WIDTH - 1]);
+  }
+}
+
+// load board from file to board
+void loadBoard(FILE *file, Board *board) {
+  for (int i = 0; i < BOARD_HEIGHT; i++) {
+    for (int j = 0; j < BOARD_WIDTH; j++) {
+      fscanf(file, "%hhu", &(*board)[i][j]);
+    }
+  }
+}
+
 void updateBoards() {
   for (int i = 0; i < BOARD_HEIGHT; i++) {
     for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -178,11 +197,7 @@ int main(int argc, char **argv) {
     CloseWindow();
     return EXIT_FAILURE;
   }
-  for (int i = 0; i < BOARD_HEIGHT; i++) {
-    for (int j = 0; j < BOARD_WIDTH; j++) {
-      fscanf(boardFile, "%hhu", &(*currentBoard)[i][j]);
-    }
-  }
+  loadBoard(boardFile, currentBoard);
   fclose(boardFile);
 
   // tick stuff
@@ -213,8 +228,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < BOARD_HEIGHT; i++) {
       for (int j = 0; j < BOARD_WIDTH; j++) {
         if ((*currentBoard)[i][j]) {
-          DrawRectangle(j * tileSize, i * tileSize,
-              tileSize, tileSize, BLACK);
+          DrawRectangle(j * tileSize, i * tileSize, tileSize, tileSize, BLACK);
         }
       }
     }
