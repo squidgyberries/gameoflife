@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define WINDOW_WIDTH  1000
 #define WINDOW_HEIGHT 1000
@@ -142,9 +143,25 @@ void updateBoards() {
   otherBoard = temp;
 }
 
-int main() {
-  // TODO: set logLevel and color based on command line args
-  
+int main(int argc, char **argv) {
+  for (int i = 1; i < argc; i++) {
+    if (!strcmp(argv[i], "--logLevel")) {
+      if (i < argc - 1) {
+        if (sscanf(argv[i + 1], "%d", &logLevel) == 1) {
+          i++;
+        } else {
+          logMsg(LOG_WARNING, "No value specified for logLevel, defaulting to %d", logLevel);
+        }
+      } else {
+        logMsg(LOG_WARNING, "No value specified for logLevel, defaulting to %d", logLevel);
+      }
+    } else if (!strcmp(argv[i], "--no-color")) {
+      color = 0;
+    } else {
+      logMsg(LOG_WARNING, "Unrecognized argument \"%s\", skipping", argv[i]);
+    }
+  }
+
   // raylib setup
   SetTraceLogCallback(logRaylib);
 
