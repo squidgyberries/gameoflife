@@ -17,7 +17,10 @@ int logLevel = LOG_INFO;
 int color = 1;
 
 int play = 0;
-int tileSize = 1;
+
+// "camera" stuff
+int tileSize = 20;
+int xOffset, yOffset;
 
 typedef unsigned char Board[BOARD_HEIGHT][BOARD_WIDTH];
 
@@ -207,9 +210,23 @@ int main(int argc, char **argv) {
 
   // game loop
   while (!WindowShouldClose()) {
+    // INPUT
+
+    // play
     if (IsKeyPressed(KEY_SPACE)) {
       play = !play;
     }
+
+    // move "camera"
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+      SetMouseCursor(MOUSE_CURSOR_RESIZE_ALL);
+      Vector2 delta = GetMouseDelta();
+      xOffset -= delta.x;
+      yOffset -= delta.y;
+    }
+
+    // zoom "camera"
+    tileSize += GetMouseWheelMove();
 
     // tick
     tickTimer += GetFrameTime();
@@ -220,15 +237,27 @@ int main(int argc, char **argv) {
       tickTimer -= tickTime;
     }
 
+    // DRAW
     BeginDrawing();
 
-    ClearBackground(RAYWHITE);
+    ClearBackground((Color){20, 20, 20, 255});
 
     // draw board
     for (int i = 0; i < BOARD_HEIGHT; i++) {
       for (int j = 0; j < BOARD_WIDTH; j++) {
         if ((*currentBoard)[i][j]) {
-          DrawRectangle(j * tileSize, i * tileSize, tileSize, tileSize, BLACK);
+          Rectangle rec = {j * tileSize - xOffset, i * tileSize - yOffset, tileSize, tileSize};
+
+          // skip off screen tiles
+          if (rec.x + rec.width < 0 || rec.y + rec.height < 0 || rec.x >= WINDOW_WIDTH ||
+              rec.y >= WINDOW_HEIGHT) {
+            continue;
+          }
+
+          DrawRectangleRec(rec, RAYWHITE);
+          if (tileSize >= 10) {
+            DrawRectangleLinesEx(rec, (float)tileSize / 10.0f, LIGHTGRAY);
+          }
         }
       }
     }
