@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,14 +14,19 @@
 #define BOARD_WIDTH  1000
 #define BOARD_HEIGHT 1000
 
+#define TILE_SIZE 20
+
 int logLevel = LOG_INFO;
 int color = 1;
 
 int play = 0;
 
 // "camera" stuff
-int tileSize = 20;
-int xOffset, yOffset;
+float tileMult = 1.0f;
+float multMin = 0.1f;
+float multMax = 10.0f;
+float zoomSens = 0.1f;
+float camX, camY;
 
 typedef unsigned char Board[BOARD_HEIGHT][BOARD_WIDTH];
 
@@ -86,6 +92,11 @@ void logMsg(TraceLogLevel msgType, const char *fmt, ...) {
   va_start(args, fmt);
   logRaylib(msgType, fmt, args);
   va_end(args);
+}
+
+float clampf(float value, float min, float max) {
+  float t = value < min ? min : value;
+  return t > max ? max : t;
 }
 
 // write board to file
@@ -221,12 +232,26 @@ int main(int argc, char **argv) {
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
       SetMouseCursor(MOUSE_CURSOR_RESIZE_ALL);
       Vector2 delta = GetMouseDelta();
-      xOffset -= delta.x;
-      yOffset -= delta.y;
+      camX -= delta.x;
+      camY -= delta.y;
+    } else {
+      SetMouseCursor(MOUSE_CURSOR_DEFAULT);
     }
 
     // zoom "camera"
-    tileSize += GetMouseWheelMove();
+    float mouseWheel = GetMouseWheelMove();
+    if (mouseWheel) {
+      float newMultiplier = clampf(tileMult + zoomSens * mouseWheel, multMin, multMax);
+      camX *= newMultiplier / tileMult;
+      // camX = ((camX + 0.5 * WINDOW_WIDTH) * tileMult + zoomSens * mouseWheel /
+      // tileMult) -
+      //  0.5 * WINDOW_WIDTH;
+      camY *= newMultiplier / tileMult;
+      // camY = ((camY + 0.5 * WINDOW_HEIGHT) * tileMult + zoomSens * mouseWheel /
+      // tileMult) -
+      //  0.5 * WINDOW_HEIGHT;
+      tileMult = newMultiplier;
+    }
 
     // tick
     tickTimer += GetFrameTime();
@@ -242,11 +267,17 @@ int main(int argc, char **argv) {
 
     ClearBackground((Color){20, 20, 20, 255});
 
+    int tileSize = round(TILE_SIZE * tileMult);
+    printf("%d\n", tileSize);
+
+    DrawRectangleLines(
+        -1 - camX, -1 - camY, WINDOW_WIDTH * tileSize + 1, WINDOW_HEIGHT * tileSize + 1, RED);
+
     // draw board
     for (int i = 0; i < BOARD_HEIGHT; i++) {
       for (int j = 0; j < BOARD_WIDTH; j++) {
         if ((*currentBoard)[i][j]) {
-          Rectangle rec = {j * tileSize - xOffset, i * tileSize - yOffset, tileSize, tileSize};
+          Rectangle rec = {j * tileSize - camX, i * tileSize - camY, tileSize, tileSize};
 
           // skip off screen tiles
           if (rec.x + rec.width < 0 || rec.y + rec.height < 0 || rec.x >= WINDOW_WIDTH ||
@@ -256,7 +287,7 @@ int main(int argc, char **argv) {
 
           DrawRectangleRec(rec, RAYWHITE);
           if (tileSize >= 10) {
-            DrawRectangleLinesEx(rec, (float)tileSize / 10.0f, LIGHTGRAY);
+            DrawRectangleLinesEx(rec, tileSize / 10.0f, LIGHTGRAY);
           }
         }
       }
