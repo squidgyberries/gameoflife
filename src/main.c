@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
 
   // tick stuff
   double tickRate = 5.0;
-  const double tickTime = 1.0 / tickRate;
+  double tickTime = 1.0 / tickRate;
   double tickTimer = 0.0;
 
   // game loop
@@ -253,6 +253,16 @@ int main(int argc, char **argv) {
       tileMult = newMultiplier;
     }
 
+    // tick rate
+    if (IsKeyPressed(KEY_UP)) {
+      tickRate++;
+      tickTime = 1.0 / tickRate;
+    }
+    if (IsKeyPressed(KEY_DOWN)) {
+      tickRate--;
+      tickTime = 1.0 / tickRate;
+    }
+
     // tick
     tickTimer += GetFrameTime();
     while (tickTimer >= tickTime) {
@@ -268,7 +278,6 @@ int main(int argc, char **argv) {
     ClearBackground((Color){20, 20, 20, 255});
 
     int tileSize = round(TILE_SIZE * tileMult);
-    printf("%d\n", tileSize);
 
     DrawRectangleLines(
         -1 - camX, -1 - camY, WINDOW_WIDTH * tileSize + 1, WINDOW_HEIGHT * tileSize + 1, RED);
@@ -292,6 +301,10 @@ int main(int argc, char **argv) {
         }
       }
     }
+
+    char text[128];
+    snprintf(text, 128, "FPS: %d\nZoom: %f\nTick rate: %f", GetFPS(), tileMult, tickRate);
+    DrawText(text, 8, 8, 20, GREEN);
 
     EndDrawing();
   }
